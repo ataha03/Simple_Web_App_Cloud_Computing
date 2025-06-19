@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+
+  database:
+    image: postgres:latest
+    container_name: database
+    networks:
+      - backend
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env 
+    
+  adminer:
+    image: adminer
+    container_name: adminer
+    depends_on:
+      - database
+    networks:
+      - backend
+    ports:
+      - "8091:8080"
+  
+  web-app:
+    build: ./web-app/web-app
+    container_name: web_app
+    ports:
+      - "8090:5000"
+    volumes:
+      - ./web-app/web-app:/app
+    networks:
+      - frontend
+    depends_on:
+      - database
+      - api
+
+  api:
+    build: 
+      context: ./api/api
+    container_name: api
+    volumes:
+      - ./api/api:/app
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - database
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  db_data:
